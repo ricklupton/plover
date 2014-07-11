@@ -31,6 +31,8 @@ from plover import __url__
 from plover import __credits__
 from plover import __license__
 
+from plover.ibus import launch_ibus_component
+
 
 class PloverGUI(wx.App):
     """The main entry point for the Plover application."""
@@ -198,6 +200,8 @@ class MainFrame(wx.Frame):
         pos = (config.get_main_frame_x(), config.get_main_frame_y())
         self.SetPosition(pos)
 
+        launch_ibus_component()
+        
     def consume_command(self, command):
         # The first commands can be used whether plover is active or not.
         if command == self.COMMAND_RESUME:
