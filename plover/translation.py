@@ -78,7 +78,17 @@ class Translation(object):
             return len(self.strokes)
         return 0
 
+
+class TranslationNotPossible(Exception):
+    """Signal that a translation is not possible.
+
+    This may be because the text has changed out of Plover's control,
+    so corrections issued by the Translator are not possible.
+    """
+
+
 class Translator(object):
+
     """Converts a stenotype key stream to a translation stream.
 
     An instance of this class serves as a state machine for processing key
@@ -115,10 +125,16 @@ class Translator(object):
         self._listeners = set()
         self._state = _State()
 
-    def translate(self, stroke):
+    def translate(self, stroke, reset_and_retry=True):
         """Process a single stroke."""
-        _translate_stroke(stroke, self._state, self._dictionary, self._output)
-        self._resize_translations()
+        try:
+            _translate_stroke(stroke, self._state,
+                              self._dictionary, self._output)
+            self._resize_translations()
+        except TranslationNotPossible:
+            if reset_and_retry:
+                self.clear_state()
+                self.translate(stroke, reset_and_retry=False)
 
     def set_dictionary(self, d):
         """Set the dictionary."""

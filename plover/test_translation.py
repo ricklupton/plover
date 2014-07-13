@@ -7,7 +7,8 @@ from collections import namedtuple
 import copy
 from mock import patch
 from steno_dictionary import StenoDictionary, StenoDictionaryCollection
-from translation import Translation, Translator, _State, _translate_stroke, _lookup
+from translation import (Translation, Translator, TranslationNotPossible,_State,
+                         _translate_stroke, _lookup)
 import unittest
 from plover.steno import Stroke, normalize_steno
 
@@ -160,7 +161,30 @@ class TranslatorTestCase(unittest.TestCase):
         t.translate(s)
         self.assertEqual(output1, [])
         self.assertEqual(output2, [])
-        
+
+    def test_listeners_can_refuse_translation(self):
+        """If a listener raises TranslationNotPossible, the translator should
+        reset itself and try the same stroke again."""
+        exceptions = [TranslationNotPossible()]
+        def rejecting_listener(undo, do, prev):
+            if exceptions:
+                raise exceptions.pop()
+
+        t = Translator()
+        s1 = stroke('S')
+        s2 = stroke('T')
+        tr1 = Translation([s1], None)
+        tr2 = Translation([s2], None)
+
+        # Baseline - translating a stroke adds it
+        t.translate(s1)
+        self.assertEqual(t.get_state().translations, [tr1])
+
+        # If a listener rejects the stroke, reset and try again
+        t.add_listener(rejecting_listener)
+        t.translate(s2)
+        self.assertEqual(t.get_state().translations, [tr2])
+
     def test_changing_state(self):
         output = []
         def listener(undo, do, prev):
