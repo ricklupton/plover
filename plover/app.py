@@ -208,8 +208,7 @@ class StenoEngine(object):
             callback(None)
 
     def set_output(self, o):
-        self.full_output.send_backspaces = o.send_backspaces
-        self.full_output.send_string = o.send_string
+        self.full_output.change_string = o.change_string
         self.full_output.send_key_combination = o.send_key_combination
         self.full_output.send_engine_command = o.send_engine_command
         self.command_only_output.send_engine_command = o.send_engine_command

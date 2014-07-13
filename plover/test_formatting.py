@@ -14,16 +14,13 @@ def action(**kwargs):
 class CaptureOutput(object):
     def __init__(self):
         self.instructions = []
-    
-    def send_backspaces(self, n):
-        self.instructions.append(('b', n))
-        
-    def send_string(self, s):
-        self.instructions.append(('s', s))
-        
+
+    def change_string(self, before, after):
+        self.instructions.append(('s', before, after))
+
     def send_key_combination(self, c):
         self.instructions.append(('c', c))
-        
+
     def send_engine_command(self, c):
         self.instructions.append(('e', c))
 
@@ -55,128 +52,144 @@ class FormatterTestCase(unittest.TestCase):
     def test_formatter(self):
         cases = (
 
+        # Undo a translation formatted as 'hello'
         (
          ([translation(formatting=[action(text='hello')])], [], None),
          (),
-         [('b', 5)]
+         [('s', 'hello', '')]
         ),
-        
+
+        # Format 'hello' following another translation
         (
          ([], 
           [translation(rtfcre=('S'), english='hello')], 
           translation(rtfcre=('T'), english='a', formatting=[action(text='f')])
          ),
          ([action(text=' hello', word='hello')],),
-         [('s', ' hello')]
+         [('s', '', ' hello')]
         ),
-        
+
+        # Format 'hello' following nothing
         (
          ([], [translation(rtfcre=('S'), english='hello')], None),
          ([action(text=' hello', word='hello')],),
-         [('s', ' hello')]
+         [('s', '', ' hello')]
         ),
-        
+
+        # Format unknown translation
         (
          ([], [translation(rtfcre=('ST-T',))], None),
          ([action(text=' ST-T', word='ST-T')],),
-         [('s', ' ST-T')]
+         [('s', '', ' ST-T')]
         ),
-        
+
+        # Format unknown translation following another translation
         (
          ([], 
           [translation(rtfcre=('ST-T',))], 
           translation(formatting=[action(text='hi')])),
          ([action(text=' ST-T', word='ST-T')],),
-         [('s', ' ST-T')]
+         [('s', '', ' ST-T')]
         ),
-        
+
+        # Undo ' test' and replace with 'rest', capitalized
         (
          ([translation(formatting=[action(text=' test')])],
           [translation(english='rest')],
           translation(formatting=[action(capitalize=True)])),
          ([action(text=' Rest', word='Rest')],),
-         [('b', 4), ('s', 'Rest')]
+            [('s', 'test', 'Rest')]
         ),
-        
+
+        # Undo dare+ing and replace with 'rest', capitalized
         (
          ([translation(formatting=[action(text='dare'), 
                                    action(text='ing', replace='e')])],
          [translation(english='rest')],
          translation(formatting=[action(capitalize=True)])),
          ([action(text=' Rest', word='Rest')],),
-         [('b', 6), ('s', ' Rest')]
+         [('s', 'daring', ' Rest')]
         ),
-        
+
+        # Undo ' drive' and replace with 'driving' (minimal change)
         (
          ([translation(formatting=[action(text=' drive')])],
          [translation(english='driving')],
          None),
          ([action(text=' driving', word='driving')],),
-         [('b', 1), ('s', 'ing')]
+         [('s', 'e', 'ing')]
         ),
-        
+
+        # Undo ' drive' and replace with key combo and 'driving' (full change)
         (
          ([translation(formatting=[action(text=' drive')])],
          [translation(english='{#c}driving')],
          None),
          ([action(combo='c'), action(text=' driving', word='driving')],),
-         [('b', 6), ('c', 'c'), ('s', ' driving')]
+         [('s', ' drive', ''), ('c', 'c'), ('s', '', ' driving')]
         ),
-        
+
+        # Undo ' drive' and replace with command and 'driving' (full change)
         (
          ([translation(formatting=[action(text=' drive')])],
          [translation(english='{PLOVER:c}driving')],
          None),
          ([action(command='c'), action(text=' driving', word='driving')],),
-         [('b', 6), ('e', 'c'), ('s', ' driving')]
+            [('s', ' drive', ''), ('e', 'c'), ('s', '', ' driving')]
         ),
-        
+
+        # Format a number
         (
          ([],
           [translation(rtfcre=('1',))],
           None),
          ([action(text=' 1', word='1', glue=True)],),
-         [('s', ' 1')]
+         [('s', '', ' 1')]
         ),
-        
+
+        # Format a number following 'hi'
         (
          ([],
           [translation(rtfcre=('1',))],
           translation(formatting=[action(text='hi', word='hi')])),
          ([action(text=' 1', word='1', glue=True)],),
-         [('s', ' 1')]
+         [('s', '', ' 1')]
         ),
 
+        # Format a number following 'hi' with glue (--> no space)
         (
          ([],
           [translation(rtfcre=('1',))],
           translation(formatting=[action(text='hi', word='hi', glue=True)])),
          ([action(text='1', word='hi1', glue=True)],),
-         [('s', '1')]
+         [('s', '', '1')]
         ),
 
+        # Format two numbers following 'hi' with glue (--> no space)
         (
          ([],
           [translation(rtfcre=('1-9',))],
           translation(formatting=[action(text='hi', word='hi', glue=True)])),
          ([action(text='19', word='hi19', glue=True)],),
-         [('s', '19')]
+         [('s', '', '19')]
         ),
 
+        # Format an unknown translation following 'hi'
         (
          ([],
           [translation(rtfcre=('ST-PL',))],
           translation(formatting=[action(text='hi', word='hi')])),
          ([action(text=' ST-PL', word='ST-PL')],),
-         [('s', ' ST-PL')]
+         [('s', '', ' ST-PL')]
         ),
 
+        # Format an unknown translation following nothing
         (
          ([],
           [translation(rtfcre=('ST-PL',))],
           None),
          ([action(text=' ST-PL', word='ST-PL')],),
-         [('s', ' ST-PL')]
+         [('s', '', ' ST-PL')]
         ),
 
         )

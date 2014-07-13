@@ -316,11 +316,11 @@ class Output(object):
         self.keyboard_control = KeyboardEmulation()
         self.engine = engine
 
-    def send_backspaces(self, b):
-        wx.CallAfter(self.keyboard_control.send_backspaces, b)
-
-    def send_string(self, t):
-        wx.CallAfter(self.keyboard_control.send_string, t)
+    def change_string(self, before, after):
+        if before:
+            wx.CallAfter(self.keyboard_control.send_backspaces, len(before))
+        if after:
+            wx.CallAfter(self.keyboard_control.send_string, after)
 
     def send_key_combination(self, c):
         wx.CallAfter(self.keyboard_control.send_key_combination, c)
@@ -329,4 +329,4 @@ class Output(object):
     def send_engine_command(self, c):
         result = self.engine_command_callback(c)
         if result and not self.engine.is_running:
-            self.engine.machine.suppress = self.send_backspaces
+            self.engine.machine.suppress = self.keyboard_control.send_backspaces

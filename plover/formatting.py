@@ -24,7 +24,13 @@ class Formatter(object):
 
     send_backspaces -- Takes a number and deletes back that many characters.
 
-    send_string -- Takes a string and prints it verbatim.
+    change_string -- Tries to change a 'before' string just before the
+    cursor into a verbatim 'after' string. The simplest way to do this
+    is to issue the number of backspace keypresses corresponding to
+    the length of the 'before' string, then issue the keypresses
+    corresponding to the 'after' string. However if more information
+    is available the output class should check that the correct
+    'before' string is really being deleted.
 
     send_key_combination -- Takes a string the dictionary format for specifying
     key combinations and issues them.
@@ -34,9 +40,9 @@ class Formatter(object):
 
     """
 
-    output_type = namedtuple(
-        'output', ['send_backspaces', 'send_string', 'send_key_combination', 
-                   'send_engine_command'])
+    output_type = namedtuple('output', ['change_string',
+                                        'send_key_combination',
+                                        'send_engine_command'])
 
     def __init__(self):
         self.set_output(None)
@@ -106,10 +112,9 @@ class OutputHelper(object):
         
     def commit(self):
         offset = len(commonprefix([self.before, self.after]))
-        if self.before[offset:]:
-            self.output.send_backspaces(len(self.before[offset:]))
-        if self.after[offset:]:
-            self.output.send_string(self.after[offset:])
+        if self.before[offset:] or self.after[offset:]:
+            self.output.change_string(self.before[offset:],
+                                      self.after[offset:])
         self.before = ''
         self.after = ''
 
