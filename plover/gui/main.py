@@ -22,6 +22,7 @@ from plover.machine.base import STATE_ERROR, STATE_INITIALIZING, STATE_RUNNING
 from plover.machine.registry import machine_registry
 from plover.exception import InvalidConfigurationError
 from plover.gui.paper_tape import StrokeDisplayDialog
+from plover.ibus.component import IBusComponentThread
 
 from plover import __name__ as __software_name__
 from plover import __version__
@@ -189,7 +190,13 @@ class MainFrame(wx.Frame):
                 if ret == wx.ID_CANCEL:
                     self._quit()
                     return
-                    
+
+        # print "Creating component thread"
+        # ibus_thread = IBusComponentThread()
+        # print "Starting thread"
+        # ibus_thread.start()
+        # print "...started"
+
         self.steno_engine.add_stroke_listener(
             StrokeDisplayDialog.stroke_handler)
         if self.config.get_show_stroke_display():

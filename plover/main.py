@@ -9,9 +9,9 @@ import sys
 import traceback
 
 WXVER = '2.8'
-if not hasattr(sys, 'frozen'):
-    import wxversion
-    wxversion.ensureMinimal(WXVER)
+# if not hasattr(sys, 'frozen'):
+#     import wxversion
+#     wxversion.ensureMinimal(WXVER)
 
 import wx
 import json
@@ -23,6 +23,7 @@ import plover.gui.main
 import plover.oslayer.processlock
 from plover.oslayer.config import CONFIG_DIR, ASSETS_DIR
 from plover.config import CONFIG_FILE, DEFAULT_DICTIONARY_FILE, Config
+from plover.ibus.component import IBusComponentThread
 
 def show_error(title, message):
     """Report error to the user.
@@ -67,11 +68,18 @@ def init_config_dir():
 def main():
     """Launch plover."""
     try:
+        print "Creating component thread"
+        ibus_thread = IBusComponentThread()
+        print "Starting thread"
+        ibus_thread.start()
+        print "...started"
+
         # Ensure only one instance of Plover is running at a time.
         with plover.oslayer.processlock.PloverLock():
             init_config_dir()
             config = Config()
             config.target_file = CONFIG_FILE
+
             gui = plover.gui.main.PloverGUI(config)
             gui.MainLoop()
             with open(config.target_file, 'wb') as f:

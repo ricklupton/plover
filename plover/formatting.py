@@ -49,7 +49,7 @@ class Formatter(object):
 
     def set_output(self, output):
         """Set the output class."""
-        noop = lambda x: None
+        noop = lambda *args: None
         output_type = self.output_type
         fields = output_type._fields
         self._output = output_type(*[getattr(output, f, noop) for f in fields])
